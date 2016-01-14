@@ -1,9 +1,4 @@
-##https://github.com/eugeneyan/kaggle_otto.git
-
-
-############################################################################
-### load libraries
-############################################################################
+##source: https://github.com/eugeneyan/kaggle_otto.git
 library(caret)
 library(doParallel)
 detectCores()
