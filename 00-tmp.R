@@ -75,7 +75,6 @@ testing <- impute(testing, training)
 training <- mutate_each(training, funs(replace(., which(is.na(.)), 
                                                ifelse(is.factor(.), names(which.max(table(.))), median(., na.rm=TRUE)))))
 
-
 # Standardization
 preObj <- preProcess(training, method = c("center", "scale"))
 training <- predict(preObj, training)
@@ -87,7 +86,6 @@ testing <- predict(preObj, testing)
 # DATA SPLIT
 # ===================
 set.seed(1204)
-
 
 # Remove non-features
 training <- select(training, -nacount)
@@ -101,7 +99,6 @@ testing <- as.data.frame(testing)
 # v_label_train <- training[inTrain, 17]
 # toTest <- training[-inTrain, -17]
 # v_label_test <- training[-inTrain, 17]
-
 
 toTrain <- training[, -17]
 v_label_train <- training[, 17]
