@@ -28,6 +28,16 @@ create_feat_diff <- function(df) {
   }
   return(df)
 }
+
+get_feat_ranks <- function(df, cutoff = 0.7, freqCut = 80/20) {
+  cat("calculate correlation matrix ...", fill = T)
+  correlationMatrix <- cor(df)
+  high_corr <- findCorrelation(correlationMatrix, cutoff = cutoff)
+  cat("calculate nzb ...", fill = T)
+  nzv <- nzv(df, freqCut = freqCut, saveMetrics = T)
+  return(list(high_corr, nzv))
+}
+
 # ======================
 # FEATURE CONSTRUCTION (OPERATION BETWEEN TWO FEATRUES)
 # ======================
@@ -47,7 +57,8 @@ names_out2 <- colnames(train_feat_xor)[feat_ranks_xor[[1]]] # 1081
 
 names_out_xor <- unique(c(names_out1, names_out2)) # 1373
 
-train_feat_xor2 <- train_feat_xor[, -which(colnames(train_feat_xor) %in% names_out_xor)] # 2998 left
+train_feat_xor <- train_feat_xor[, -which(colnames(train_feat_xor) %in% names_out_xor)] # 2998 left
+saveRDS(train_feat_xor, "train_feat_xor.rds")
 
 
 # ====================================
@@ -71,14 +82,6 @@ cat(c("Trainset with new features: ", dim(trainset), "..."), fill = T)
 # ======================
 # FEATURE SELECTION
 # ======================
-get_feat_ranks <- function(df, cutoff = 0.7, freqCut = 90/10) {
-  cat("calculate correlation matrix ...", fill = T)
-  correlationMatrix <- cor(df)
-  high_corr <- findCorrelation(correlationMatrix, cutoff = cutoff)
-  cat("calculate nzb ...", fill = T)
-  nzv <- nzv(df, freqCut = freqCut, saveMetrics = T)
-  return(list(high_corr, nzv))
-}
 
 
 correlationMatrix <- cor(trainset)
@@ -100,10 +103,10 @@ nzv <- nzv(trainsetorg[, 1:93], saveMetrics = T)
 # FEATURE RANK & SUBSET with FSelector
 # =====================================
 # chi square test independence between each feature and class
-train_feat_xor2$target <- trainset$target
+train_feat_xor$target <- trainset$target
 # use a subset to run the following - too computational expensivie
-intrain_feat_xor <- createDataPartition(train_feat_xor2$target, p = 0.25, list = F)
-strain_feat_xor <- train_feat_xor2[intrain_feat_xor, ]
+intrain_feat_xor <- createDataPartition(train_feat_xor$target, p = 0.1, list = F)
+strain_feat_xor <- train_feat_xor[intrain_feat_xor, ]
 
 
 rank1_xor <- chi.squared(target ~ ., data = strain_feat_xor)
