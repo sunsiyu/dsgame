@@ -103,6 +103,7 @@ nzv <- nzv(trainsetorg[, 1:93], saveMetrics = T)
 # FEATURE RANK & SUBSET with FSelector
 # =====================================
 # chi square test independence between each feature and class
+
 train_feat_xor$target <- trainset$target
 # use a subset to run the following - too computational expensivie
 intrain_feat_xor <- createDataPartition(train_feat_xor$target, p = 0.1, list = F)
@@ -117,6 +118,16 @@ rank3_xor <- gain.ratio(target ~ ., data = strain_feat_xor)
 rank4_xor <- symmetrical.uncertainty(target ~ ., data = strain_feat_xor)
 rank5_xor <- oneR(target ~ ., data = strain_feat_xor)
 rank6_xor <- cfs(target ~ ., data = strain_feat_xor)  # subset of feature names
+
+rank2_xor_df2[1:50,]
+rank3_xor_df <- as.data.frame(rank3_xor)
+rank3_xor_df$feature <- rownames(rank3_xor)
+rank3_xor_df <- rank3_xor_df[order(-rank3_xor_df$attr_importance), ]
+rank3_xor_df[1:50,]
+
+names_xor <- unique(c(rank2_xor_df2[1:50,"feature"], rank3_xor_df[1:50,"feature"]))
+saveRDS(names_xor, "names_xor.rds")
+
 # consistency(target ~ ., data = trainset)  # toolong
 # best.first.search(attributes, eval.fun)
 # exhaustive.search(attributes, eval.fun)
