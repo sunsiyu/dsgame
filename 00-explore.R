@@ -3,9 +3,20 @@
 # ===================
 library(ggplot2)
 library(dplyr)
+library(mlbench)
+library(DMwR)
+library(tree)
+library(rpart)
 library(caret)
 library(randomForest)
-library(DMwR)
+library(adabag)
+library(gbm)
+library(doParallel)
+library(FSelector)
+library(glmnet)
+library(party)
+library(kernlab)
+# library(doMC) #not available for windows
 
 # ===================
 # SET SEED
@@ -16,40 +27,104 @@ set.seed(114)
 # LOAD DATA
 # ===================
 trainfile <- dir(".", "train.csv", recursive = T)
-testfiles <- dir(".", "test.csv", recursive = T)
+testfile <- dir(".", "test.csv", recursive = T)
 samplesubmission <- dir(".", "sampleSubmission.csv", recursive = T)
 samplesubmission <- read.table(samplesubmission, header = T, sep=",")
 train <- read.table(trainfile, header=T, sep=",")
+testing <- read.table(testfile, header=T, sep=",")
+dim(train)
+str(train)
 # in total 61878 x 95
 # 1 id, 93 features, 1 label
 # all features are integers
 # range of features varies
 # label with multiple classes
 # proportion of each class not equal, 2,6,8,3,9,7,
-
+dim(testing)
+# 144368 x 94
 train <- train[, -1]  # remove id
-labels <- train[, 94]
+testing <- testing[, -1] # remove id
+
+# ===================
+# DATA SPLIT
+# ===================
+intrain <- createDataPartition(train$target, p = 0.8, list = FALSE)
+trainset <- train[intrain, ]
+testset <- train[-intrain, ]
+### some checks
+# nrow(trainset) /nrow(train)
+# prop.table(table(train$target))
+# prop.table(table(trainset$target))
 
 # ===================
 # LABEL EXPLORE
 # ===================
 # distribution of classes
 nclasses <- table(train$target)
-max(nclasses) / min(nclasses)
-prop.table(table(train$target))
+max(nclasses) / min(nclasses)  # 8.357698
+proptbl <- prop.table(table(train$target))
+proptbl <- as.data.frame(proptbl)
+colnames(proptbl) <- c("class", "frequency")
+
+# just plot total number
 qplot(factor(target), data=train, geom="bar", fill = I("darkgray")) + coord_flip()
 barplot(table(train$target), horiz = T)
+
+# ggplot proptbl
+p1 <- ggplot(proptbl, aes(reorder(class, frequency), frequency)) + 
+  geom_bar(stat="identity", width = 0.1, fill = "skyblue") + 
+  coord_flip() + 
+  ggtitle("Class Imbalance")
 
 # ===================
 # DATA EXPLORE
 # ===================
+
+### Check for duplicates(no duplicates)
+which(duplicated(train[, -94]))
+
+### check for missing values (no NAs)
+which(is.na(train))
+
+
+
 ### features: total non-zero values in each feature
 ## TODO: look at histgram / distribution of non-zero values
+get_feat_zeroratio <- function(df, order = T) {
+  stopifnot(is.data.frame(df))
+  feat_zeroratio <- apply(df, 2, function(x) sum(x==0) / nrow(df))
+  
+  if (order) {
+    feat_zeroratio <- feat_zeroratio[order(-feat_zeroratio)]
+  }
+  feat_zeroratio <- as.data.frame(feat_zeroratio)
+  feat_zeroratio$feature <- rownames(feat_zeroratio)
+  rownames(feat_zeroratio) <- 1:nrow(feat_zeroratio)
+  return(feat_zeroratio)
+}
+
+train_zeroratio <- get_feat_zeroratio(train[, -94]) 
+# ggplot feature zero ratio in train 
+p2 <- ggplot(train_zeroratio, aes(reorder(feature, feat_zeroratio), feat_zeroratio)) + 
+  geom_bar(stat="identity", width = 0.1, fill = "black") + 
+  coord_flip() + 
+  ggtitle("Feature Zero Ratios")
+
+test_zeroratio <- get_feat_zeroratio(testing)
+p3 <- ggplot(test_zeroratio, aes(reorder(feature, feat_zeroratio), feat_zeroratio)) + 
+  geom_bar(stat="identity", width = 0.1, fill = "black") + 
+  coord_flip() + 
+  ggtitle("Feature Zero Ratios - toSubmit.csv")
+
+# check similar zero ratios distribution in features between train set and to submit set
+length(unique(train_zeroratio[1:20, "feature"], test_zeroratio[1:20, "feature"]))
+
+
+# Relation between zeroratio and class
 npos <- sapply(train[, -94], function(x) sum(x>0)/nrow(train))
 barplot(npos, horiz = T)
 range(npos)
 hist(npos, breaks = 50)
-
 l_npos <- vector("list", 9)
 for (i in 1:9) {
   tmp <- train[train$target == levels(train$target)[i], ]
@@ -58,11 +133,15 @@ for (i in 1:9) {
 l_npos <- do.call(rbind, l_npos)
 boxplot(l_npos)
 
-### Check for duplicates(no duplicates)
-which(duplicated(train[, -94]))
 
-### check for missing values (no NAs)
-which(is.na(train))
+# original feature rank with train
+correlationMatrix <- cor(train[, -94])
+high_corr <- findCorrelation(correlationMatrix, cutoff = 0.8) # feat_45
+nzv <- nzv(train[, -94], saveMetrics = T)
+names_nzv <- rownames(nzv[nzv$nzv, ])
+names_zeroratio <- train_zeroratio[train_zeroratio$feat_zeroratio > 0.9, "feature"]
+names_out <- unique(names_nzv, names_zeroratio)
+length(names_out)
 
 
 # ==========================================
@@ -76,47 +155,3 @@ names(up_train)[94] <- "target"
 smote_train <- SMOTE(target ~ ., data = train)
 
 l_train <- list(down_train, up_train, smote_train)
-
-
-
-# ===================
-# TRAINING
-# ===================
-
-for (i in 1:4){
-  lfit <- lapply(l_train, function(x) randomForest(target ~ ., data=x, importance=TRUE, ntree=100))
-}
-
-# create a random forest model using the target field as the response and all 93 features as inputs
-fit <- randomForest(Class ~ ., data=train2, importance=TRUE, ntree=100)
-
-# create a dotchart of variable/feature importance as measured by a Random Forest
-varImpPlot(fit)
-
-# use the random forest model to create a prediction
-pred <- predict(fit,test,type="prob")
-submit <- data.frame(id = test$id, pred)
-
-# data split
-inTrain <- createDataPartition(train$target, )
-
-# ===================
-# PREDICTION RESULTS
-# ===================
-# use the random forest model to create a prediction
-test <- read.table(testfiles, header=T, sep=",")
-id <- test[, 1]
-test <- test[,-1]
-
-pred_prob <- predict(lfit[[2]], test, type="prob")
-pred_class <- predict(lfit[[2]], test)
-
-submit <- data.frame(id = id, pred_class)
-submit$x <- 1
-submit <- reshape(submit, idvar = "id", timevar = "pred_class", direction = "wide")
-submit <- submit[, c(1, 10, 4, 6, 2, 8, 3, 9, 7, 5)]
-submit[is.na(submit)] <- 0
-names(submit) <- names(samplesubmission)
-#or
-submit <- data.frame(id = id, pred_prob)
-write.csv(submit, file = "submit-02.csv", row.names = FALSE)
