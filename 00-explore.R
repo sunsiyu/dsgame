@@ -16,6 +16,7 @@ library(FSelector)
 library(glmnet)
 library(party)
 library(kernlab)
+library(xgboost)
 # library(doMC) #not available for windows
 
 # ===================
@@ -32,19 +33,18 @@ samplesubmission <- dir(".", "sampleSubmission.csv", recursive = T)
 samplesubmission <- read.table(samplesubmission, header = T, sep=",")
 train <- read.table(trainfile, header=T, sep=",")
 testing <- read.table(testfile, header=T, sep=",")
-dim(train)
-str(train)
-# in total 61878 x 95
+dim(train)  # 61878 x 95
+dim(testing)  # 144368 x 94
+# str(train)
 # 1 id, 93 features, 1 label
 # all features are integers
 # range of features varies
 # label with multiple classes
 # proportion of each class not equal, 2,6,8,3,9,7,
-dim(testing)
-# 144368 x 94
+
+
 train <- train[, -1]  # remove id
 testing <- testing[, -1] # remove id
-
 # ===================
 # DATA SPLIT
 # ===================

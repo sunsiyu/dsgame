@@ -15,6 +15,8 @@ library(doParallel)
 library(FSelector)
 library(glmnet)
 library(party)
+library(kernlab)
+library(xgboost)
 # library(doMC) #not available for windows
 
 # ===================
@@ -26,7 +28,9 @@ testfile <- dir(".", "test.csv", recursive = T)
 samplesubmission <- dir(".", "sampleSubmission.csv", recursive = T)
 samplesubmission <- read.table(samplesubmission, header = T, sep=",")
 train <- read.table(trainfile, header=T, sep=",")
+testing <- read.table(testfile, header=T, sep=",")
 train <- train[, -1]  # remove id
+testing <- testing[, -1] # remove id
 cat(c("original dimension of train.csv is: ", dim(train), "..."), fill = T)
 
 # ===================
@@ -40,6 +44,20 @@ cat(c("Splited training set dimension: ", dim(trainset), "..."), fill = T)
 # nrow(trainset) /nrow(train)
 # prop.table(table(train$target))
 # prop.table(table(trainset$target))
+
+# ================================
+# DATA SPLIT - FEATURE SELECTION
+# ================================
+# set.seed(119)
+# intrain_feat <- createDataPartition(trainset$target, p = 0.8, list = FALSE)
+# trainset_feat <- trainset[intrain_feat, ]
+# testset_feat <- trainset[-intrain_feat, ]
+# cat(c("Splited training set dimension: ", dim(trainset_feat), "..."), fill = T)
+### some checks
+# nrow(trainset) /nrow(train)
+# prop.table(table(train$target))
+# prop.table(table(trainset$target))
+
 
 # ===================
 # CLEAN UP
