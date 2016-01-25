@@ -10,32 +10,34 @@ length(nofeat) # 20
 
 # logical computation
 create_feat_xor <- function(df, n = 1:ncol(df)) {
-  stopifnot(is.data.frame(df) && ncol(df)>1 && is.numeric(as.matrix(df)))
   stopifnot(is.numeric(n) && is.vector(n))
   df <- df[, n]
+  stopifnot(is.data.frame(df) && ncol(df)>1 && is.numeric(as.matrix(df)))
   n <- ncol(df) - 1
-  tmpdf <- data.frame()
+
   for (i in 1:n) {
     for (j in (i+1):(n+1)) {
-      eval(parse(text = paste0('tmpdf$xor_', i, '_', j, ' <- as.integer(xor(df[, i], df[, j]))')))
+      eval(parse(text = paste0('df$xor_', i, '_', j, ' <- as.integer(xor(df[, i], df[, j]))')))
     }
   }
-  return(tmpdf)
+  df <- df[, grep("xor", names(df))]
+  return(df)
 }
 
 # difference computation
 create_feat_diff <- function(df, n=1:ncol(df)) {
-  stopifnot(is.data.frame(df) && ncol(df)>1 && is.numeric(as.matrix(df)))
   stopifnot(is.numeric(n) && is.vector(n))
   df <- df[, n]
+  stopifnot(is.data.frame(df) && ncol(df)>1 && is.numeric(as.matrix(df)))
   n <- ncol(df) - 1
-  tmpdf <- data.frame()
+
   for (i in 1:n) {
     for (j in (i+1):(n+1)) {
-      eval(parse(text = paste0('tmpdf$diff_', i, '_', j, ' <- df[, i] - df[, j]')))
+      eval(parse(text = paste0('df$diff_', i, '_', j, ' <- df[, i] - df[, j]')))
     }
   }
-  return(tmpdf)
+  df <- df[, grep("diff", names(df))]
+  return(df)
 }
 
 
@@ -76,11 +78,11 @@ strainset_all_feats <- trainset_all_feats[intrain_feat_rank, ]
 rank3_chi <- chi.squared(target ~ ., data = strainset_all_feats)
 # linear.correlation(target ~ ., data = trainset)  # numeric
 # rank.correlation(target ~ ., data = trainset)  # numeric
-rank2_xor <- information.gain(target ~ ., data = strain_feat_xor)
-rank3_xor <- gain.ratio(target ~ ., data = strain_feat_xor)
-rank4_xor <- symmetrical.uncertainty(target ~ ., data = strain_feat_xor)
-rank5_xor <- oneR(target ~ ., data = strain_feat_xor)
-rank6_xor <- cfs(target ~ ., data = strain_feat_xor)  # subset of feature names
+rank4_ig <- information.gain(target ~ ., data = trainset_all_feats)
+rank5_gr <- gain.ratio(target ~ ., data = trainset_all_feats)
+rank4_xor <- symmetrical.uncertainty(target ~ ., data = trainset_all_feats)
+rank5_xor <- oneR(target ~ ., data = trainset_all_feats)
+rank6_xor <- cfs(target ~ ., data = trainset_all_feats)  # subset of feature names
 
 rank2_xor_df2[1:50,]
 rank3_xor_df <- as.data.frame(rank3_xor)
