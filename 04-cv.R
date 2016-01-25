@@ -1,11 +1,4 @@
 # ===================
-# LOAD PACKAGES
-# ===================
-library(boot)
-library(caret)
-library(mlbench)
-
-# ===================
 # CROSS VALIDATION
 # ===================
 # leave-one-out and 6-fold cross-validation prediction error for 
@@ -30,8 +23,6 @@ cost <- function(r, pi = 0) mean(abs(r-pi) > 0.5)
 nodal.glm <- glm(r ~ stage+xray+acid, binomial, data = nodal)
 (cv.err <- cv.glm(nodal, nodal.glm, cost, K = nrow(nodal))$delta)
 (cv.11.err <- cv.glm(nodal, nodal.glm, cost, K = 11)$delta)
-
-
 
 
 # =============================
