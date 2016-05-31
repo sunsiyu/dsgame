@@ -12,14 +12,8 @@ train <- read.table(trainfile, header=T, sep=",")
 testing <- read.table(testfile, header=T, sep=",")
 dim(train)
 str(train)
-# in total 61878 x 95
-# 1 id, 93 features, 1 label
-# all features are integers
-# range of features varies
-# label with multiple classes
-# proportion of each class not equal, 2,6,8,3,9,7,
 dim(testing)
-# 144368 x 94
+# check for id
 train <- train[, -1]  # remove id
 testing <- testing[, -1] # remove id
 
@@ -39,7 +33,7 @@ testset <- train[-intrain, ]
 # ===================
 # distribution of classes
 nclasses <- table(train$target)
-max(nclasses) / min(nclasses)  # 8.357698
+max(nclasses) / min(nclasses) 
 proptbl <- prop.table(table(train$target))
 proptbl <- as.data.frame(proptbl)
 colnames(proptbl) <- c("class", "frequency")
@@ -63,7 +57,6 @@ which(duplicated(train[, -94]))
 
 ### check for missing values (no NAs)
 which(is.na(train))
-
 
 
 ### features: total non-zero values in each feature

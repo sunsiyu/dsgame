@@ -1,19 +1,4 @@
 # ===================
-# LOAD PACKAGES
-# ===================
-library(ggplot2)
-library(dplyr)
-library(DMwR)
-library(tree)
-library(rpart)
-library(caret)
-library(randomForest)
-library(adabag)
-library(gbm)
-library(doParallel)
-# library(doMC)
-
-# ===================
 # LOAD DATA & SPLIT
 # ===================
 set.seed(114)
@@ -116,17 +101,6 @@ model_pls <- train(x = trainset,
                    trControl = ctrl1,
                    preProc = c("center", "scale"))
 
-
-
-# rf
-
-
-
-
-
-
-
-
 #List of frequency tables for easy access
 tables <- lapply(train[, 2:94], table)
 #List of histogram plots to easily see skew of all variables.
@@ -159,13 +133,6 @@ model_rf$error
 
 
 ################################################################################
-
-
-
-
-
-
-
 
 # summaryFunction
 LogLoss <- function(actual, predicted, eps=0.00001) {

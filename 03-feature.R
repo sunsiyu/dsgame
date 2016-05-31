@@ -4,9 +4,13 @@ source("02-data.R")
 # ======================
 ### logical computation
 create_feat_xor <- function(df) {
-  stopifnot(is.data.frame(df))
-  stopifnot(ncol(df) > 1)
-  stopifnot(is.numeric(as.matrix(df)))
+  # stopifnot(is.data.frame(df))
+  # stopifnot(ncol(df) > 1)
+  # stopifnot(is.numeric(as.matrix(df)))
+  
+  df <- as.matrix(df)
+  df[df > 0] <- 1
+  df <- as.data.frame(df)
   n <- ncol(df) - 1
   for (i in 1:n) {
     for (j in (i+1):(n+1)) {
